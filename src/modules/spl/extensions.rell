@@ -1,0 +1,14 @@
+@extend(yours.provide_properties)
+function (yours.token, modules: set<name>): map<text, map<text, gtv>> {
+  val properties = map<text, map<text, gtv>>();
+  if (not modules.contains(MODULE_NAME)) return properties;
+
+  val spl = spl_balance @? { token } ( mint = .spl_token.mint, amount = .amount, decimals = .spl_token.decimals );
+  if (spl != null) {
+    properties.put(MODULE_NAME, map<text, gtv>());
+    properties.get(MODULE_NAME).put("mint", spl.mint.to_gtv());
+    properties.get(MODULE_NAME).put("amount", spl.amount.to_gtv());
+    properties.get(MODULE_NAME).put("decimals", spl.decimals.to_gtv());
+  }
+  return properties;
+}

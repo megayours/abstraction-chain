@@ -1,0 +1,4 @@
+@mount("ipfs")
+module;
+
+import lib.yours;

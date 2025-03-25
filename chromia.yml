@@ -1,0 +1,62 @@
+definitions:
+  - &sender # Configuration for a chain that sends messages
+    icmf:
+      sender:
+        message_query_limit: 5
+    gtx:
+      modules:
+        - "net.postchain.d1.icmf.IcmfSenderGTXModule"
+        - "net.postchain.d1.iccf.IccfGTXModule"
+  - &revolt
+    revolt:
+      timeout: 60000
+      fast_revolt_status_timeout: 10000
+      exponential_delay_max: 600000
+      revolt_when_should_build_block: true
+  - &blockstrategy
+    blockstrategy:
+      maxblocktransactions: 5
+
+blockchains:
+  abstraction_local:
+    module: main
+    config:
+      <<: *sender
+      <<: *revolt
+      <<: *blockstrategy
+    moduleArgs:
+      modules.consensus:
+        signers:
+          - x"034059e641d0ceb0e84688a2a6b70cf3b8e642fe933b5d520173d5d9486b89a864" # local
+        required: 1
+  abstraction:
+    module: main
+    config:
+      <<: *sender
+      <<: *revolt
+      <<: *blockstrategy
+    moduleArgs:
+      modules.consensus:
+        signers:
+          - x"03DFA55093395BFD30C12C6D85455EB1D7722A52D812F3B78A6ED6ACD9FD68856D" # prod
+          - x"035D91732E6DF9A5C74CEFD9F068C096E945FB4ABA9C3471736C750FDCC9144BFC" # prod
+          - x"028E48019D5DEC6759F90A5B6865A4B356AD9E2ECA9804E63BC1DBB9D38B494F79" # prod
+        required: 2
+
+compile:
+  rellVersion: 0.14.2
+
+database:
+  schema: schema_megadata
+  database: postgres
+  username: postgres
+  password: postgres
+
+deployments:
+  testnet:
+    url: https://node0.testnet.chromia.com:7740
+    brid: x"6F1B061C633A992BF195850BF5AA1B6F887AEE01BB3F51251C230930FB792A92"
+    container: 051d41a9e5c5b2b060e5814fab32b72a6ece4aa568c66e749557c1bb9e5fd97c
+    chains:
+      megadata: x"C5C735F8F9001F44A6CEBCF0B23D5D4705B2EF98F28672CACA826FD53EC5E9E6"
+      abstraction: x"21F200B3707BC034E25BF86455F08AECF4089E0C566E0171F3CE637DFB4DE311"

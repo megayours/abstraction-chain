@@ -1,0 +1,13 @@
+entity slot {
+  key integer;
+}
+
+entity tx_signature {
+  key byte_array;
+  slot;
+}
+
+entity solana_token {
+  key address: text;
+  yours.token;
+}

@@ -1,0 +1,6 @@
+val MODULE_NAME = "erc20";
+val EVENT_PREFIX = "L_%s".format(MODULE_NAME);
+
+val MINT_MESSAGE_TYPE = "erc20_mint";
+val TRANSFER_MESSAGE_TYPE = "erc20_transfer";
+val DESTROY_MESSAGE_TYPE = "erc20_destroy";

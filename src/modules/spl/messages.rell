@@ -1,0 +1,10 @@
+struct spl_id {
+  mint: text;
+}
+
+struct balance_update_message {
+  spl_id: spl_id;
+  account: text;
+  amount: big_integer;
+  decimals: integer;
+}

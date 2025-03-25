@@ -1,0 +1,124 @@
+operation mint (
+  chain: name, 
+  block_number: integer, 
+  contract: byte_array,
+  event_id: text,
+  to: byte_array, 
+  amount: big_integer,
+  decimals: integer,
+  name: text,
+  symbol: text
+) {
+  consensus.validate();
+  val _chain = evm.ensure_chain(chain);
+  val _contract = evm.ensure_contract(_chain, contract, block_number);
+
+  if (_contract.block_number < block_number) {
+    update _contract ( .block_number = block_number );
+  }
+
+  create evm.processed_event(_contract, event_id);
+
+  if (amount == 0) return;
+
+  val msg = erc20
+    .mint_message(
+      erc20_id = erc20.erc20_id(chain, contract),
+      to,
+      amount,
+      decimals,
+      name,
+      symbol
+    );
+  val mint_topic = _format_erc20_topic(chain, contract);
+  send_message(mint_topic, [erc20.MINT_MESSAGE_TYPE.to_gtv(), msg.to_gtv()].to_gtv());
+
+  // Mint on our chain
+  erc20._handle_mint(chain_context.blockchain_rid, msg);
+  val account = erc20._ensure_evm_account(msg.to);
+  val token = erc20.erc20_balance @ {
+    .erc20.chain == chain.lower_case(),
+    .erc20.contract == contract,
+    .account == account
+  } ( .token );
+
+  yours._mint(token, yours.balance_info(account, amount = 1), null);
+}
+
+operation destroy (
+  chain: name, 
+  block_number: integer, 
+  contract: byte_array,
+  event_id: text,
+  from: byte_array, 
+  amount: big_integer
+) {
+  consensus.validate();
+
+  val _chain = evm.ensure_chain(chain);
+  val _contract = evm.ensure_contract(_chain, contract, block_number);
+
+  create evm.processed_event(_contract, event_id);
+  update _contract ( .block_number = block_number );
+
+  if (amount == 0) return;
+
+  val msg = erc20
+    .destroy_message(// let Gamma generate the id to be able to support multiple chains with different structures later
+      erc20_id = erc20.erc20_id(chain, contract),
+      from,
+      amount
+    );
+  val topic = _format_erc20_topic(chain, contract);
+  send_message(topic, [erc20.DESTROY_MESSAGE_TYPE.to_gtv(), msg.to_gtv()].to_gtv());
+
+  erc20._handle_destroy(chain_context.blockchain_rid, msg);
+}
+
+operation transfer (
+  chain: name, 
+  block_number: integer, 
+  contract: byte_array,
+  event_id: text,
+  from: byte_array, 
+  to: byte_array,
+  amount: big_integer
+) {
+  consensus.validate();
+
+  val _chain = evm.ensure_chain(chain);
+  val _contract = evm.ensure_contract(_chain, contract, block_number);
+
+  val already_processed = evm.processed_event @? { .contract.id == contract, .event_id == event_id } != null;
+  if (already_processed) return;
+
+  create evm.processed_event(_contract, event_id);
+  update _contract ( .block_number = block_number );
+
+  if (amount == 0) return;
+
+  val msg = erc20
+    .transfer_message(
+      erc20_id = erc20.erc20_id(chain, contract),
+      from,
+      to,
+      amount
+    );
+  val topic = _format_erc20_topic(chain, contract);
+  send_message(topic, [erc20.TRANSFER_MESSAGE_TYPE.to_gtv(), msg.to_gtv()].to_gtv());
+
+  erc20._handle_transfer(chain_context.blockchain_rid, msg);
+
+  val account = erc20._ensure_evm_account(msg.to);
+  val token = erc20.erc20_balance @ {
+    .erc20.chain == chain.lower_case(),
+    .erc20.contract == contract,
+    account
+  } ( .token );
+
+  // Only mint balance if it doesn't exist. It might have been created previously and crosschained.
+  val token_balance = yours.token_balance @? { token, account };
+  if (token_balance == null) {
+    yours._mint(token, yours.balance_info(account, amount = 1), null);
+  }
+}

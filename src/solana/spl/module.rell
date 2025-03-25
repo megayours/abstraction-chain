@@ -1,0 +1,9 @@
+@mount("solana.spl")
+module;
+
+import modules.consensus;
+import modules.spl;
+
+import lib.icmf. { send_message };
+import lib.yours;
+import ^^.solana;

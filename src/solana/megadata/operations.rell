@@ -1,0 +1,66 @@
+operation register_token(tx_slot: integer, tx_signature: text, address: text, decimals: integer, properties: json) {
+  consensus.validate();
+
+  val _address = format_address(address);
+  val id = (token_id_prefix + _address).to_bytes();
+  val _properties = map<text, map<text, gtv>>.from_gtv(gtv.from_json(properties));
+  val token = yours.create_token(
+    id = id, 
+    token_type = yours.token_type.external, 
+    properties = _properties,
+    decimals = decimals
+  );
+
+  val slot = slot @? { tx_slot } ?: create slot(tx_slot);
+  create tx_signature(
+    tx_signature.to_bytes(),
+    slot
+  );
+
+  create solana_token (
+    address = _address,
+    token = token
+  );
+
+  megadata.on_token_registered(_address, token);
+
+  for (module_name in _properties.keys()) {
+    megadata.on_metadata_registered(_address, token, module_name, _properties[module_name]);
+  }
+}
+
+operation update_metadata(tx_slot: integer, tx_signature: text, address: text, properties: json) {
+  consensus.validate();
+
+  val slot = slot @? { tx_slot } ?: create slot(tx_slot);
+  create tx_signature(
+    tx_signature.to_bytes(),
+    slot
+  );
+
+  val _address = format_address(address);
+  val new_properties = map<text, map<text, gtv>>.from_gtv(gtv.from_json(properties));
+
+  val token = require(solana_token @? { .address == _address } ( .token ), "Token not found by address %s".format(_address));
+  val existing_properties = yours.imported_properties @? { token } ( yours.byte_array_to_properties($.data) ) ?: map<text, map<text, gtv>>();
+
+  val new_modules = new_properties.keys() @* { $ not in existing_properties };
+  val existing_modules = existing_properties.keys() @* { $ in new_properties };
+
+  // Update existing properties
+  for (module_name in existing_modules) {
+    val module_properties = existing_properties[module_name];
+    module_properties.put_all(new_properties[module_name]);
+
+    megadata.on_metadata_registered(_address, token, module_name, module_properties);
+  }
+
+  // Add new properties
+  for (module_name in new_modules) {
+    val module_properties = new_properties[module_name];
+    existing_properties.put(module_name, module_properties);
+    megadata.on_metadata_registered(_address, token, module_name, module_properties);
+  }
+
+  update yours.imported_properties @ { token } ( yours.properties_to_byte_array(existing_properties) );
+}

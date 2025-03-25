@@ -1,0 +1,3 @@
+query get_signers() {
+  return list<pubkey>.from_gtv_pretty(chain_context.args.signers);
+}

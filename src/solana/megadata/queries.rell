@@ -1,0 +1,8 @@
+query get_metadata(address: text) {
+  val _address = format_address(address);
+  return solana_token @? { .address == _address } ( yours.get_metadata(.token) );
+}
+
+query get_slot() {
+  return slot @? {} ( @sort_desc @omit .rowid, .integer ) limit 1;
+}

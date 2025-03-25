@@ -1,0 +1,2 @@
+@extendable
+function balance_updated(chain: name, contract: byte_array, account: byte_array, amount: big_integer, decimals: integer) { }

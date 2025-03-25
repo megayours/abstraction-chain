@@ -1,0 +1,7 @@
+function _format_spl_topic(mint: text) {
+  return "%s_%s"
+    .format(
+      spl.EVENT_PREFIX,
+      mint.lower_case()
+    );
+}

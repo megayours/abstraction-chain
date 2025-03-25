@@ -1,0 +1,2 @@
+val module_name = "solana";
+val token_id_prefix = module_name + ":";

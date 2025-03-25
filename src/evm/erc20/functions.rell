@@ -1,0 +1,8 @@
+function _format_erc20_topic(chain: name, contract: byte_array) {
+  return "%s_%s_%s"
+    .format(
+      erc20.EVENT_PREFIX,
+      chain.lower_case(),
+      contract.to_hex().lower_case()
+    );
+}

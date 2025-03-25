@@ -1,0 +1,4 @@
+val MODULE_NAME = "spl";
+val EVENT_PREFIX = "L_%s".format(MODULE_NAME);
+
+val BALANCE_UPDATE_TYPE = "spl_balance_update";

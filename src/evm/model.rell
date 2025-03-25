@@ -1,0 +1,12 @@
+entity chain {
+  key name;
+}
+
+entity contract {
+  key chain, id: byte_array;
+  mutable block_number: integer;
+}
+
+entity processed_event {
+  key contract, event_id: text;
+}

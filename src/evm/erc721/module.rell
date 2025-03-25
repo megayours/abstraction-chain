@@ -1,0 +1,11 @@
+@mount("evm.erc721") module;
+
+import ^^.evm;
+
+import modules.extending_metadata;
+import modules.collection;
+import modules.consensus;
+import modules.erc721;
+
+import lib.yours;
+import lib.icmf.{ send_message };

@@ -1,0 +1,9 @@
+@mount("evm.erc20") module;
+
+import ^^.evm;
+
+import modules.consensus;
+import modules.erc20;
+
+import lib.yours;
+import lib.icmf.{ send_message };

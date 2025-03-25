@@ -1,0 +1,10 @@
+entity spl_token {
+  key mint: text;
+  decimals: integer;
+}
+
+entity spl_balance {
+  key spl_token, account: ft4.accounts.account;
+  key yours.token;
+  mutable amount: big_integer;
+}

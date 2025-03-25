@@ -1,0 +1,6 @@
+function attach(token: yours.token, uri: text) {
+  yours.attach_module(token, module_name);
+
+  delete metadata @? { .token == token };
+  create metadata(token, uri);
+}

@@ -1,0 +1,7 @@
+function ensure_chain(name) {
+  return chain @? { name } ?: create chain(name);
+}
+
+function ensure_contract(chain, id: byte_array, block_number: integer) {
+  return contract @? { chain, .id == id } ?: create contract(chain, id, block_number);
+}

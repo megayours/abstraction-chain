@@ -1,0 +1,1 @@
+function format_address(address: text) = address.lower_case();

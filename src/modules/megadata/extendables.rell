@@ -1,0 +1,5 @@
+@extendable
+function on_token_registered(adddress: text, yours.token);
+
+@extendable
+function on_metadata_registered(adddress: text, yours.token, module_name: name, properties: map<name, gtv>);

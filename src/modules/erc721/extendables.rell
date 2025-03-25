@@ -1,0 +1,5 @@
+@extendable
+function properties_handled(yours.token, properties: map<text, gtv>) { }
+
+@extendable
+function balance_updated(chain: name, contract: byte_array, token_id: big_integer, account: byte_array, amount: big_integer) { }

@@ -1,0 +1,12 @@
+function validate() {
+  val possible_signers = get_signers();
+  var valid_signatures = 0;
+
+  for (signer in possible_signers) {
+    if (op_context.is_signer(signer)) {
+      valid_signatures++;
+    }
+  }
+
+  require(valid_signatures >= chain_context.args.required, "Not enough signatures %s/%s".format(valid_signatures, chain_context.args.required));
+}

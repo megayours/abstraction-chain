@@ -1,0 +1,6 @@
+module;
+
+struct module_args {
+  signers: gtv; // list<pubkey>
+  required: integer;
+}

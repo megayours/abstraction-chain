@@ -1,0 +1,56 @@
+@extend(receive_icmf_message)
+function _handle_message(sender: byte_array, topic: text, body: gtv) {
+  val args = list<gtv>.from_gtv(body);
+  if (args.size() != 2) {
+    return;
+  }
+
+  val type = try_call(text.from_gtv(args[0], *));
+  if (type == null) {
+    return;
+  }
+
+  val data = args[1];
+
+  when (type) {
+    BALANCE_UPDATE_TYPE -> {
+      val balance_update_msg = try_call(balance_update_message.from_gtv(data, *));
+      if (balance_update_msg != null) {
+        _validate_event_topic(topic, balance_update_msg.spl_id.mint);
+        _handle_balance_update(sender, balance_update_msg);
+        return;
+      }
+    }
+  }
+}
+
+function _validate_event_topic(topic: text, mint: text) {
+  val expected_topic = "%s_%s".format(EVENT_PREFIX, mint.lower_case());
+  require(topic == expected_topic, "Invalid event topic");
+}
+
+function _handle_balance_update(sender: byte_array, msg: balance_update_message) {
+  val spl_token = spl_token @? { .mint == msg.spl_id.mint } ?: create spl_token (mint = msg.spl_id.mint, decimals = msg.decimals);
+
+  var balance = spl_balance @? { spl_token, .account.id == msg.account.to_bytes() };
+  if (balance == null) {
+    val solana_account = _ensure_solana_account(msg.account);
+    val token = yours._create_token(
+      id = _serialize_token_id(msg.account, msg.spl_id.mint),
+      token_type = yours.token_type.external,
+      properties = map<text, map<text, gtv>>(),
+      issuing_chain = sender,
+      decimals = 0
+    );
+    yours.attach_module(token, MODULE_NAME);
+    balance = create spl_balance (spl_token, solana_account, token, msg.amount);
+  } else {
+    balance.amount = msg.amount;
+  }
+
+  balance_updated(msg.spl_id.mint, balance.account, balance.amount, spl_token.decimals);
+}
+
+function _serialize_token_id(account: text, mint: text): byte_array {
+  return (account + mint).hash();
+}

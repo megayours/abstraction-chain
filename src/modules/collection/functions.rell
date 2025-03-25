@@ -1,0 +1,6 @@
+function attach(token: yours.token, name: text) {
+  yours.attach_module(token, MODULE_NAME);
+
+  delete collection @? { .token == token };
+  create collection(token, name);
+}

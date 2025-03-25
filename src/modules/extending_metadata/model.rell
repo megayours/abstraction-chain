@@ -1,0 +1,4 @@
+entity metadata {
+  key yours.token;
+  key uri: text;
+}

@@ -1,0 +1,40 @@
+operation balance_update (
+  mint: text,
+  account: text,
+  amount: big_integer,
+  decimals: integer
+) {
+  consensus.validate();
+
+  val _mint = (m: mint) @? { .id == mint } ?: create mint(mint, decimals);
+  val _account = (a: account) @? { .id == account } ?: create account(account);
+
+  val _balance = balance @? { _mint, _account };
+
+  if (_balance == null) {
+    create balance(mint = _mint, account = _account, amount = amount);
+  } else {
+    update _balance ( .amount = amount );
+  }
+
+  val msg = spl.balance_update_message(
+    spl_id = spl.spl_id(mint),
+    account = account,
+    amount = amount,
+    decimals = _mint.decimals
+  );
+  
+  val balance_topic = _format_spl_topic(mint);
+  send_message(balance_topic, [spl.BALANCE_UPDATE_TYPE.to_gtv(), msg.to_gtv()].to_gtv());
+
+  val solana_account = spl._ensure_solana_account(account);
+  val has_existing_balance = spl.spl_balance @? { .spl_token.mint == mint, .account == solana_account } != null;
+
+  spl._handle_balance_update(chain_context.blockchain_rid, msg);
+  val token = spl.spl_balance @ { .spl_token.mint == mint, .account == solana_account } ( .token );
+
+  if (not has_existing_balance) {
+    // Mint a "certificate" token to the account
+    yours._mint(token, yours.balance_info(solana_account, amount = 1), null);
+  }
+}

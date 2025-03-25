@@ -1,0 +1,13 @@
+entity mint {
+  key id: text;
+  decimals: integer;
+}
+
+entity account {
+  key id: text;
+}
+
+entity balance {
+  key mint: mint, account: account;
+  mutable amount: big_integer;
+}

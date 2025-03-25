@@ -1,0 +1,4 @@
+entity collection {
+  key yours.token;
+  name;
+}

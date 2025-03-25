@@ -1,0 +1,158 @@
+@extend(receive_icmf_message)
+function _handle_message(sender: byte_array, topic: text, body: gtv) {
+  log("ERC20: _handle_message", topic, body);
+  val args = list<gtv>.from_gtv(body);
+  if (args.size() != 2) {
+    return;
+  }
+
+  val type = try_call(text.from_gtv(args[0], *));
+  if (type == null) {
+    return;
+  }
+
+  val data = args[1];
+
+  when (type) {
+    MINT_MESSAGE_TYPE -> {
+      val mint_msg = try_call(mint_message.from_gtv(data, *));
+      if (mint_msg != null) {
+        _validate_event_topic(topic, mint_msg.erc20_id.chain, mint_msg.erc20_id.contract);
+        _handle_mint(sender, mint_msg);
+        return;
+      }
+    }
+    TRANSFER_MESSAGE_TYPE -> {
+      val transfer_msg = try_call(transfer_message.from_gtv(data, *));
+      if (transfer_msg != null) {
+        _handle_transfer(sender, transfer_msg);
+        return;
+      }
+    }
+    DESTROY_MESSAGE_TYPE -> {
+      val destroy_msg = try_call(destroy_message.from_gtv(data, *));
+      if (destroy_msg != null) {
+        _handle_destroy(sender, destroy_msg);
+        return;
+      }
+    }
+  }
+}
+
+function _validate_event_topic(topic: text, chain: name, contract: byte_array) {
+  val expected_topic = "%s_%s_%s".format(EVENT_PREFIX, chain.lower_case(), contract.to_hex().lower_case());
+  require(topic == expected_topic, "Invalid event topic");
+}
+
+function _handle_mint(sender: byte_array, msg: mint_message) {
+  var erc20 = erc20 @? { .chain == msg.erc20_id.chain.lower_case(), .contract == msg.erc20_id.contract };
+  if (erc20 == null) {
+    log("creating token", msg);
+    erc20 = create erc20 (
+      chain = msg.erc20_id.chain.lower_case(),
+      contract = msg.erc20_id.contract,
+      name = msg.name,
+      symbol = msg.symbol,
+      decimals = msg.decimals
+    );
+  }
+
+  val account = _ensure_evm_account(msg.to);
+  var balance = erc20_balance @? { erc20, account };
+  if (balance == null) {
+    val token = yours._create_token(
+      id = _serialize_token_id(msg.to, msg.erc20_id.chain, msg.erc20_id.contract),
+      token_type = yours.token_type.external,
+      properties = map<text, map<text, gtv>>(),
+      issuing_chain = sender,
+      decimals = 0
+    );
+    yours.attach_module(token, MODULE_NAME);
+    balance = create erc20_balance ( erc20, account, token, msg.amount );
+    log("Created balance for account: ", account.id.to_hex());
+
+    yours.log_transfer_history_entry(
+      token,
+      account,
+      amount = msg.amount,
+      type = yours.transfer_type.external_received
+    );
+  } else {
+    balance.amount += msg.amount;
+  }
+
+  balance_updated(erc20.chain, erc20.contract, account.id, balance.amount, erc20.decimals);
+}
+
+function _handle_destroy(sender: byte_array, msg: destroy_message) {
+  val erc20 = erc20 @? { .chain == msg.erc20_id.chain.lower_case(), .contract == msg.erc20_id.contract };
+  if (erc20 == null) {
+    return;
+  }
+
+  val account = _ensure_evm_account(msg.from);
+  var balance = erc20_balance @? { erc20, account };
+  if (balance == null) {
+    return;
+  }
+
+  balance.amount = (balance.amount - msg.amount).max(0);
+
+  yours.log_transfer_history_entry(
+    balance.token,
+    account,
+    amount = msg.amount,
+    type = yours.transfer_type.external_sent
+  );
+
+  balance_updated(erc20.chain, erc20.contract, account.id, balance.amount, erc20.decimals);
+}
+
+function _serialize_token_id(account: byte_array, chain: name, contract: byte_array): byte_array {
+  return (account + chain.lower_case().to_bytes() + contract).hash();
+}
+
+function _handle_transfer(sender: byte_array, msg: transfer_message) {
+  val from = _ensure_evm_account(msg.from);
+  log("Handling transfer from: ", from.id.to_hex());
+  val from_balance = erc20_balance @? {
+    .erc20.chain == msg.erc20_id.chain.lower_case(),
+    .erc20.contract == msg.erc20_id.contract,
+    .account == from
+  };
+
+  if (from_balance != null) {
+    from_balance.amount -= msg.amount;
+    balance_updated(from_balance.erc20.chain, from_balance.erc20.contract, from.id, from_balance.amount, from_balance.erc20.decimals);
+  }
+
+  val to = _ensure_evm_account(msg.to);
+  var to_balance = erc20_balance @? {
+    .erc20.chain == msg.erc20_id.chain.lower_case(),
+    .erc20.contract == msg.erc20_id.contract,
+    .account == to
+  };
+  if (to_balance == null) {
+    val token = yours._create_token(
+      id = _serialize_token_id(msg.to, msg.erc20_id.chain, msg.erc20_id.contract),
+      token_type = yours.token_type.external,
+      properties = map<text, map<text, gtv>>(),
+      issuing_chain = sender,
+      decimals = 0
+    );
+    yours.attach_module(token, MODULE_NAME);
+    to_balance = create erc20_balance (
+      if (from_balance != null) from_balance.erc20 
+      else erc20 @ { .chain == msg.erc20_id.chain.lower_case(),.contract == msg.erc20_id.contract },
+      token,
+      to,
+      msg.amount
+    );
+    log("Created balance for account: ", to.id.to_hex());
+    yours.log_transfer_history_entry(token, to, msg.amount, yours.transfer_type.external_received);
+  } else {
+    to_balance.amount += msg.amount;
+  }
+
+  balance_updated(to_balance.erc20.chain, to_balance.erc20.contract, to.id, to_balance.amount, to_balance.erc20.decimals);
+}

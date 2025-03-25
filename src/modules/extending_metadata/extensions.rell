@@ -1,0 +1,26 @@
+@extend(yours.provide_properties)
+function(yours.token, modules: set<name>): map<text, map<text, gtv>> {
+  val properties = map<text, gtv>();
+  if (not modules.contains(module_name)) return yours.provide_module_properties(module_name, properties);
+
+  val uri = metadata @? { .token == token } ( .uri );
+  if (uri != null) {
+    properties.put("uri", uri.to_gtv());
+  }
+
+  return yours.provide_module_properties(module_name, properties);
+}
+
+@extend(yours.receive_properties)
+function(yours.token, module_name: name, properties: map<text, gtv>) {
+  if (module_name != module_name) return;
+  val uri_gtv = properties.get_or_null("uri");
+  if (uri_gtv == null) return;
+  val uri = text.from_gtv(uri_gtv);
+
+  val existing_data = metadata @? { .token == token } ( e = $, .uri );
+  if (uri != existing_data?.uri) {
+    delete existing_data?.e;
+    create metadata(token, uri);
+  }
+}

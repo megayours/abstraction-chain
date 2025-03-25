@@ -1,0 +1,8 @@
+module;
+
+import lib.yours;
+import lib.icmf.receiver. { receive_icmf_message };
+
+namespace ft4 {
+  import lib.ft4.accounts;
+}

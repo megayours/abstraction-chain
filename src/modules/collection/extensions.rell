@@ -1,0 +1,26 @@
+@extend(yours.provide_properties)
+function(yours.token, modules: set<name>): map<text, map<text, gtv>> {
+  val properties = map<text, gtv>();
+  if (not modules.contains(MODULE_NAME)) return yours.provide_module_properties(MODULE_NAME, properties);
+
+  val name = collection @? { .token == token } ( .name );
+  if (name != null) {
+    properties.put("name", name.to_gtv());
+  }
+
+  return yours.provide_module_properties(MODULE_NAME, properties);
+}
+
+@extend(yours.receive_properties)
+function(yours.token, module_name: name, properties: map<text, gtv>) {
+  if (module_name != MODULE_NAME) return;
+  val name_gtv = properties.get_or_null("name");
+  if (name_gtv == null) return;
+  val name = text.from_gtv(name_gtv);
+
+  val existing_data = collection @? { .token == token } ( e = $, .name );
+  if (name != existing_data?.name) {
+    delete existing_data?.e;
+    create collection(token, name);
+  }
+}

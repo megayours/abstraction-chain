@@ -1,0 +1,88 @@
+operation mint (
+  chain: name, 
+  block_number: integer, 
+  contract: byte_array,
+  event_id: text,
+  token_id: big_integer,
+  to: byte_array, 
+  metadata: json,
+  token_uri: text,
+  collection_name: text?
+) {
+  consensus.validate();
+  val _chain = evm.ensure_chain(chain);
+  val _contract = evm.ensure_contract(_chain, contract, block_number);
+
+  if (_contract.block_number < block_number) {
+    update _contract ( .block_number = block_number );
+  }
+
+  create evm.processed_event(_contract, event_id);
+
+  val properties = map<text, map<text, gtv>>();
+  properties.put(erc721.MODULE_NAME, map<text, gtv>.from_gtv(gtv.from_json(metadata)));
+  val msg = erc721
+    .mint_message(
+      id = erc721._serialize_token_id(chain, contract, token_id),
+      erc721_id = erc721.erc721_id(chain, contract, token_id),
+      to,
+      properties
+    );
+  val mint_topic = _format_erc721_topic(chain, contract);
+  send_message(mint_topic, [erc721.MINT_MESSAGE_TYPE.to_gtv(), msg.to_gtv()].to_gtv());
+
+  // Mint on Abstraction Chain
+  erc721._handle_mint(chain_context.blockchain_rid, msg);
+  val token = erc721.erc721 @ { .token.id == msg.id } ( .token );
+  val account = erc721._ensure_evm_account(msg.to);
+
+  yours._mint(token, yours.balance_info(account, amount = 1), null);
+
+  // Attach modules
+  extending_metadata.attach(token, token_uri);
+  if (collection_name != null) {
+    collection.attach(token, collection_name);
+  }
+}
+
+operation transfer (
+  chain: name, 
+  block_number: integer, 
+  contract: byte_array,
+  event_id: text,
+  token_id: big_integer,
+  from: byte_array, 
+  to: byte_array
+) {
+  consensus.validate();
+
+  val _chain = evm.ensure_chain(chain);
+  val _contract = evm.ensure_contract(_chain, contract, block_number);
+
+  if (_contract.block_number < block_number) {
+    update _contract ( .block_number = block_number );
+  }
+
+  create evm.processed_event(_contract, event_id);
+
+  val existing_token_id = require(erc721
+    .erc721 @? {
+      .chain == chain,
+      .contract == contract,
+      .token_id == token_id
+    } (
+      .token.id
+    ), "Unable to find token: %s in contract: %s".format(token_id, contract.to_hex()));
+
+  val msg = erc721
+    .transfer_message(
+      id = existing_token_id,
+      from,
+      to
+    );
+  val topic = _format_erc721_topic(chain, contract);
+  send_message(topic, [erc721.TRANSFER_MESSAGE_TYPE.to_gtv(), msg.to_gtv()].to_gtv());
+
+  erc721._handle_transfer(chain_context.blockchain_rid, msg);
+}
+

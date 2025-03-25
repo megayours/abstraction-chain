@@ -1,0 +1,11 @@
+query get_block_number(chain: name, contract: byte_array) {
+  return (c: contract) @? { .chain.name == chain, .id == contract } ( .block_number );
+}
+
+query get_processed_events(contract: byte_array) {
+  return (e: processed_event) @* { .contract.id == contract } ( .event_id );
+}
+
+query is_event_processed(contract: byte_array, event_id: text) {
+  return (e: processed_event) @? { .contract.id == contract, .event_id == event_id } != null;
+}
