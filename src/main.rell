@@ -1,6 +1,8 @@
 module;
 
 import modules.consensus;
+import modules.account_links;
+import modules.asset_groups;
 
 import evm;
 import evm.erc721;

@@ -1,0 +1,10 @@
+entity asset_group {
+  key id: text;
+  created_at: timestamp;
+  mutable updated_at: timestamp;
+}
+
+entity asset_group_filter {
+  key asset_group, source: name, asset: text;
+  requires: big_integer;
+}

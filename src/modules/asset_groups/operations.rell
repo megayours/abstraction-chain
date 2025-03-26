@@ -1,0 +1,30 @@
+operation create_asset_group(id: text) {
+  create asset_group (
+    id = id,
+    created_at = op_context.last_block_time,
+    updated_at = op_context.last_block_time
+  );
+}
+
+operation add_asset_group_filter(asset_group_id: text, source: name, asset: text, requires: integer) {
+  create asset_group_filter (
+    asset_group = require(
+      asset_group @? { .id == asset_group_id },
+      "Asset group %s is unknown".format(asset_group_id)
+    ),
+    source = source,
+    asset = asset,
+    requires = requires
+  );
+}
+
+operation remove_asset_group_filter(asset_group_id: text, source: name, asset: text) {
+  delete asset_group_filter @? {
+    .asset_group == require(
+      asset_group @? { .id == asset_group_id },
+      "Asset group %s is unknown".format(asset_group_id)
+    ),
+    .source == source,
+    .asset == asset
+  };
+}

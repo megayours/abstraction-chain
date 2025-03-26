@@ -1,3 +1,25 @@
+struct contract_info {
+  chain: name;
+  contract: byte_array;
+  block_number: integer;
+  collection: name;
+  type: name;
+}
+
+query get_contracts_info(type: name?): list<contract_info> {
+  return (c: contract_metadata) @* {
+    if (type == null) true else .type == type
+  } (
+    contract_info (
+      chain = c.contract.chain.name,
+      contract = c.contract.id,
+      block_number = c.contract.block_number,
+      collection = c.collection,
+      type = c.type
+    )
+  );
+}
+
 query get_block_number(chain: name, contract: byte_array) {
   return (c: contract) @? { .chain.name == chain, .id == contract } ( .block_number );
 }

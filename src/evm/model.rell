@@ -7,6 +7,12 @@ entity contract {
   mutable block_number: integer;
 }
 
+entity contract_metadata {
+  key contract;
+  collection: name;
+  type: text;
+}
+
 entity processed_event {
   key contract, event_id: text;
 }

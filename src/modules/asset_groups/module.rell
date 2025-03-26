@@ -1,0 +1,4 @@
+@mount("asset_groups")
+module;
+
+import modules.account_links;

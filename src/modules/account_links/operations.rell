@@ -1,0 +1,24 @@
+operation link_accounts(account_a: text, account_b: text) {
+  consensus.validate();
+
+  val formatted_account_a = if (account_a.starts_with("0x")) account_a.replace("0x", "") else account_a;
+  val formatted_account_b = if (account_b.starts_with("0x")) account_b.replace("0x", "") else account_b;
+
+  require(
+    account_link @? { .link == formatted_account_a, .account == formatted_account_b } == null,
+    "Accounts %s and %s are already linked with each other".format(account_a, account_b)
+  );
+
+  create account_link (
+    account = formatted_account_a,
+    link = formatted_account_b
+  );
+}
+
+operation unlink_accounts(account_a: text, account_b: text) {
+  consensus.validate();
+  delete account_link @? { 
+    (.link == account_a and .account == account_b) or
+    (.link == account_b and .account == account_a)
+  };
+}

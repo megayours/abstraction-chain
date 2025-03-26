@@ -52,7 +52,7 @@ database:
   username: postgres
   password: postgres
 
-deployments:
+deployments: 
   testnet:
     url: https://node0.testnet.chromia.com:7740
     brid: x"6F1B061C633A992BF195850BF5AA1B6F887AEE01BB3F51251C230930FB792A92"

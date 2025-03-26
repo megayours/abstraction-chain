@@ -1,0 +1,7 @@
+query get_asset_groups() {
+  return asset_group @* { } ( .id );
+}
+
+query get_asset_group_filters(asset_group_id: text) {
+  return asset_group_filter @* { .asset_group.id == asset_group_id } ( asset_filter ( .source, .asset, .requires ) );
+}

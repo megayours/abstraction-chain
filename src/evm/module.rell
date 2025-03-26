@@ -1,1 +1,3 @@
 @mount("evm") module;
+
+import modules.consensus;

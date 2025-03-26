@@ -1,0 +1,10 @@
+query get_account_links(search: text?) {
+  val formatted_search = if (search == null) null else search.replace("0x", "").lower_case();
+  return account_link @* { 
+    if (formatted_search == null) true 
+    else (
+      .account.lower_case().starts_with(formatted_search) or
+      .link.lower_case().starts_with(formatted_search)
+    )
+  } ( .account, .link );
+}

@@ -1,0 +1,5 @@
+struct asset_filter {
+  source: name;
+  asset: text; // may be e.g. a token contract address
+  requires: big_integer; // balance requirement of specified asset
+}

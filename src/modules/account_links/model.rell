@@ -1,0 +1,3 @@
+entity account_link {
+  key account: text, link: text;
+}
