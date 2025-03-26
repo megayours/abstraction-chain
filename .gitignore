@@ -3,3 +3,6 @@ build/
 
 # secrets
 .chromia/
+
+# os
+.DS_Store
