@@ -1,0 +1,4 @@
+entity megadata {
+  key yours.token;
+  collection_id: byte_array;
+}

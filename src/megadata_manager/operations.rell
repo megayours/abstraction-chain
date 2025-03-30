@@ -1,0 +1,62 @@
+operation create_collection(owner: text, name: text) {
+  consensus.validate();
+
+  val id = sha256(op_context.transaction.tx_rid + byte_array.from_list([op_context.op_index]));
+  create collection(id, owner = format_account(owner), name);
+}
+
+operation create_item(collection: byte_array, token_id: text, properties: json) {
+  consensus.validate();
+
+  val id = megadata.generate_id(collection, token_id);
+  val _collection = require((c: collection) @? { c.id == collection }, "Collection not found: %s".format(collection));
+  val _properties = map<text, map<text, gtv>>.from_gtv(gtv.from_json(properties));
+  val token = yours.create_token(
+    id,
+    token_type = yours.token_type.external,
+    properties = _properties,
+    decimals = 0
+  );
+
+  megadata.attach(token, collection);
+
+  create item(token, _collection);
+}
+
+operation update_item(collection: byte_array, token_id: text, properties: json) {
+  consensus.validate();
+
+  val id = megadata.generate_id(collection, token_id);
+
+  val new_properties = map<text, map<text, gtv>>.from_gtv(gtv.from_json(properties));
+
+  val token = require(item @? { .token.id == id } ( .token ), "Token not found by collection %s and token id %s".format(collection, token_id));
+  val existing_properties = yours.imported_properties @? { token } ( yours.byte_array_to_properties($.data) ) ?: map<text, map<text, gtv>>();
+
+  val new_modules = new_properties.keys() @* { $ not in existing_properties };
+  val existing_modules = existing_properties.keys() @* { $ in new_properties };
+
+  // Update existing properties
+  for (module_name in existing_modules) {
+    val module_properties = existing_properties[module_name];
+    module_properties.put_all(new_properties[module_name]);
+    yours.receive_properties(token, module_name, module_properties);
+  }
+
+  // Add new properties
+  for (module_name in new_modules) {
+    val module_properties = new_properties[module_name];
+    existing_properties.put(module_name, module_properties);
+    yours.receive_properties(token, module_name, module_properties);
+  }
+
+  update yours.imported_properties @ { token } ( yours.properties_to_byte_array(existing_properties) );
+}
+
+operation delete_item(collection: byte_array, token_id: text) {
+  consensus.validate();
+
+  val id = megadata.generate_id(collection, token_id);
+  delete item @ { .token.id == id };
+  // TODO: Delete token?
+}

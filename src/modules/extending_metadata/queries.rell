@@ -1,0 +1,6 @@
+query get_token_target(uri: text) {
+  return metadata @? { .uri.like("%" + uri) } (
+    id = .token.id,
+    issuing_chain = .token.issuing_chain,
+  );
+}

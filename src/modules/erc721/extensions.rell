@@ -1,6 +1,101 @@
 @extend(yours.receive_properties)
 function (yours.token, module_name: name, properties: map<text, gtv>) {
+  log("erc721_receive_properties", token, module_name, properties);
   if (module_name != MODULE_NAME) return;
   yours.attach_module(token, MODULE_NAME);
+
+  log("Receiving properties for ERC721 module", properties);
+
+  if (properties.contains("name")) {
+    val name = text.from_gtv(properties.get("name"));
+    val erc721_name = erc721_name @? { .token == token };
+    if (erc721_name != null) {
+      erc721_name.name = name;
+    } else {
+      create erc721_name ( token, name );
+    }
+    log("Created erc721_name", name);
+  }
+
+  if (properties.contains("image")) {
+    val image = text.from_gtv(properties.get("image"));
+    val erc721_image = erc721_image @? { .token == token };
+    if (erc721_image != null) {
+      erc721_image.image = image;
+    } else {
+      create erc721_image ( token, image );
+    }
+    log("Created erc721_image", erc721_image);
+  }
+
+  if (properties.contains("description")) {
+    val description = text.from_gtv(properties.get("description"));
+    val erc721_description = erc721_description @? { .token == token };
+    if (erc721_description != null) {
+      erc721_description.description = description;
+    } else {
+      create erc721_description ( token, description );
+    }
+    log("Created erc721_description", erc721_description);
+  }
+
+  if (properties.contains("external_url")) {
+    val external_url = text.from_gtv(properties.get("external_url"));
+    val erc721_external_url = erc721_external_url @? { .token == token };
+    if (erc721_external_url != null) {
+      erc721_external_url.external_url = external_url;
+    } else {
+      create erc721_external_url ( token, external_url );
+    }
+    log("Created erc721_external_url", erc721_external_url);
+  }
+
+  if (properties.contains("attributes")) {
+    val attributes = list<gtv>.from_gtv(properties.get("attributes"));
+    val erc721_attributes = erc721_attributes @? { .token == token };
+    if (erc721_attributes != null) {
+      erc721_attributes.attributes = attributes.to_gtv_pretty().to_bytes();
+    } else {
+      create erc721_attributes ( token, attributes.to_gtv_pretty().to_bytes() );
+    }
+    log("Created erc721_attributes", erc721_attributes);
+  }
+
   properties_handled(token, properties);
+}
+
+@extend(yours.provide_properties)
+function(token: yours.token, modules: set<text>): map<text, map<text, gtv>> {
+  log("Testing if should provide properties for ERC721 module", modules);
+  val module_properties = map<text, gtv>();
+  if (modules.contains(MODULE_NAME)) {
+    log("Providing properties for ERC721 module", token);
+    val erc721_name = erc721_name @? { .token == token } ( .name );
+    val erc721_image = erc721_image @? { .token == token } ( .image );
+    val erc721_description = erc721_description @? { .token == token } ( .description );
+    val erc721_external_url = erc721_external_url @? { .token == token } ( .external_url );
+    val erc721_attributes = erc721_attributes @? { .token == token } ( .attributes );
+    if (erc721_name != null) {
+      log("Adding name to module properties", erc721_name);
+      module_properties.put("name", erc721_name.to_gtv());
+    }
+    if (erc721_image != null) {
+      log("Adding image to module properties", erc721_image);
+      module_properties.put("image", erc721_image.to_gtv());
+    }
+    if (erc721_description != null) {
+      log("Adding description to module properties", erc721_description);
+      module_properties.put("description", erc721_description.to_gtv());
+    }
+    if (erc721_external_url != null) {
+      log("Adding external_url to module properties", erc721_external_url);
+      module_properties.put("external_url", erc721_external_url.to_gtv());
+    }
+    if (erc721_attributes != null) {
+      log("Adding attributes to module properties", erc721_attributes);
+      module_properties.put("attributes", list<gtv>.from_gtv(gtv.from_bytes(erc721_attributes)).to_gtv_pretty());
+    }
+  }
+  log("Module properties", module_properties);
+  return yours.provide_module_properties(MODULE_NAME, module_properties);
 }

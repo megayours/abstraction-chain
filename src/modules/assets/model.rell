@@ -1,0 +1,11 @@
+entity source {
+  key name;
+}
+
+entity asset {
+  key source, id: text;
+  mutable unit: big_integer;
+  name;
+  type: name;
+}
+

@@ -1,0 +1,5 @@
+query get_metadata(collection: byte_array, token_id: text) {
+  val expected_id = generate_id(collection, token_id);
+  log("expected_id to look for: %s".format(expected_id.to_hex()));
+  return megadata @? { .token.id == expected_id } ( yours.get_metadata($.token) );
+}

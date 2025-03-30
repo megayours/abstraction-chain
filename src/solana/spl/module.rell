@@ -1,6 +1,7 @@
 @mount("solana.spl")
 module;
 
+import modules.assets;
 import modules.consensus;
 import modules.spl;
 

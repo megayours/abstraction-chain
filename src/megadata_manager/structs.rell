@@ -1,0 +1,5 @@
+struct item_dto {
+  collection: byte_array;
+  token_id: text;
+  properties: map<text, map<text, gtv>>;
+}

@@ -1,8 +1,11 @@
 module;
 
+import modules.assets;
 import modules.consensus;
+import modules.airdrop;
 import modules.account_links;
 import modules.asset_groups;
+import modules.megadata;
 
 import evm;
 import evm.erc721;
@@ -10,6 +13,8 @@ import evm.erc20;
 
 import solana;
 import solana.spl;
-import solana.megadata;
+// import solana.megadata;
+
+import megadata_manager;
 
 import lib.yours;

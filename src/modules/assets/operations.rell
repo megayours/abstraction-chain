@@ -1,0 +1,12 @@
+operation register(
+  source: name,
+  id: text,
+  start_unit: integer,
+  name: text,
+  type: text
+) {
+  consensus.validate();
+  
+  val _source = ensure_source(source);
+  ensure_asset(_source, id, start_unit, name, type);
+}

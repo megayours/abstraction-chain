@@ -1,2 +1,2 @@
 @extendable
-function balance_updated(mint: text, account: ft4.accounts.account, amount: big_integer, decimals: integer) { }
+function balance_updated(mint: text, account: text, amount: big_integer, decimals: integer) { }

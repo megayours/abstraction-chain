@@ -2,11 +2,15 @@ operation balance_update (
   mint: text,
   account: text,
   amount: big_integer,
-  decimals: integer
+  name: text,
+  decimals: integer,
+  slot: integer
 ) {
   consensus.validate();
 
-  val _mint = (m: mint) @? { .id == mint } ?: create mint(mint, decimals);
+  val _source = assets.ensure_source("solana");
+  val _asset = assets.ensure_asset(_source, mint, slot, name, spl.MODULE_NAME);
+  val _mint = (m: mint) @? { .asset == _asset } ?: create mint(_asset, decimals);
   val _account = (a: account) @? { .id == account } ?: create account(account);
 
   val _balance = balance @? { _mint, _account };

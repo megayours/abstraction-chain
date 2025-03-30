@@ -7,3 +7,28 @@ entity erc721 {
   key token, owner;
   key chain, contract, token_id;
 }
+
+entity erc721_name {
+  key yours.token;
+  mutable name;
+}
+
+entity erc721_image {
+  key yours.token;
+  mutable image: text;
+}
+
+entity erc721_description {
+  key yours.token;
+  mutable description: text;
+}
+
+entity erc721_external_url {
+  key yours.token;
+  mutable external_url: text;
+}
+
+entity erc721_attributes {
+  key yours.token;
+  mutable attributes: byte_array;
+}

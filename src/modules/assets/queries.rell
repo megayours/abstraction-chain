@@ -1,0 +1,25 @@
+struct asset_info {
+  source: name;
+  id: text;
+  unit: big_integer;
+  name: text;
+  type: name;
+}
+
+query get_assets_info(type: name?): list<asset_info> {
+  return (a: asset) @* {
+    if (type == null) true else .type == type
+  } (
+    asset_info (
+      source = a.source.name,
+      id = a.id,
+      unit = a.unit,
+      name = a.name,
+      type = a.type
+    )
+  );
+}
+
+query get_unit(source: name, id: text) {
+  return asset @? { .source.name == source.lower_case(), .id == id.lower_case() } ( .unit );
+}

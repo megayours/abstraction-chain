@@ -1,0 +1,25 @@
+query get_sources() {
+  return set(airdrop_eligibility_balance @* { } ( .source ));
+}
+
+query get_assets(source: name) {
+  return set(airdrop_eligibility_balance @* { .source == source } ( .asset ));
+}
+
+query get_accounts_filtered_by_assets(
+  filters: list<asset_groups.asset_filter>,
+  from: timestamp?,
+  to: timestamp?
+): list<list<text>> {
+  return _get_accounts_filtered_by_assets(filters, from, to);
+}
+
+query get_accounts_eligible_for_asset_group(asset_group_id: text, from: timestamp?, to: timestamp?) {
+  val filters = asset_groups.get_asset_group_filters(asset_group_id);
+  return _get_accounts_filtered_by_assets(filters, from, to);
+}
+
+query is_account_eligible_for_asset_group(account: text, asset_group_id: text, from: timestamp?, to: timestamp?) {
+  val filters = asset_groups.get_asset_group_filters(asset_group_id);
+  return _is_account_eligible_for_asset_group(account, filters, from, to);
+}

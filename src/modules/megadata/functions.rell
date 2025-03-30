@@ -1,0 +1,8 @@
+function attach(token: yours.token, collection: byte_array) {
+  yours.attach_module(token, MODULE_NAME);
+  create megadata(token, collection);
+}
+
+function generate_id(collection: byte_array, token_id: text): byte_array {
+  return collection + token_id.to_bytes();
+}

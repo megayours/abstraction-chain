@@ -1,0 +1,14 @@
+@mount("airdrop") module;
+
+import modules.erc20;
+import modules.erc721;
+import modules.spl;
+import modules.paging;
+import modules.asset_groups;
+import modules.account_links;
+
+import lib.yours;
+
+namespace ft4 {
+  import lib.ft4.accounts;
+}

@@ -2,6 +2,7 @@
 
 import ^^.evm;
 
+import modules.assets;
 import modules.consensus;
 import modules.erc20;
 

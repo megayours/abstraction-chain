@@ -1,8 +1,0 @@
-function ensure_chain(name) {
-  val _name = name.lower_case();
-  return chain @? { .name == _name } ?: create chain(_name);
-}
-
-function ensure_contract(chain, id: byte_array, block_number: integer) {
-  return contract @? { chain, .id == id } ?: create contract(chain, id, block_number);
-}

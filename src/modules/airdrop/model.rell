@@ -1,0 +1,10 @@
+entity airdrop_eligibility_balance {
+  source: name;
+  account: text;
+  asset: text;
+  mutable amount: big_integer;
+  decimals: integer;
+  created_at: timestamp;
+  mutable updated_at: timestamp;
+  key asset, account;
+}

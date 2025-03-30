@@ -1,0 +1,10 @@
+entity collection {
+  key id: byte_array;
+  mutable name;
+  mutable owner: text;
+}
+
+entity item {
+  key yours.token;
+  index collection;
+}

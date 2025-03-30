@@ -1,7 +1,0 @@
-operation register_contract(chain: name, contract: byte_array, block_number: integer, collection: name, type: name) {
-  // consensus.validate();
-  val _chain = ensure_chain(chain);
-  val _contract = ensure_contract(_chain, contract, block_number);
-
-  create contract_metadata(_contract, collection, type);
-}

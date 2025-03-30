@@ -1,0 +1,32 @@
+function format_source(name) {
+  return name.lower_case();
+}
+
+function format_id(id: text) {
+  return id.lower_case();
+}
+
+function format_type(type: name) {
+  return type.lower_case();
+}
+
+function get_source(name) {
+  val _name = format_source(name);
+  return source @? { .name == _name };
+}
+
+function ensure_source(name) {
+  val _name = name.lower_case();
+  return source @? { .name == _name } ?: create source(_name);
+}
+
+function get_asset(source, id: text) {
+  val _id = format_id(id);
+  return asset @? { source, .id == _id };
+}
+
+function ensure_asset(source, id: text, unit: big_integer, name, type: name) {
+  val _id = format_id(id);
+  val _type = format_type(type);
+  return asset @? { source, .id == _id } ?: create asset(source, id = _id, unit, name, type = _type);
+}

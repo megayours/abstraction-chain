@@ -10,11 +10,11 @@ operation mint (
   symbol: text
 ) {
   consensus.validate();
-  val _chain = evm.ensure_chain(chain);
-  val _contract = evm.ensure_contract(_chain, contract, block_number);
+  val _chain = assets.ensure_source(chain);
+  val _contract = assets.ensure_asset(_chain, contract.to_hex(), block_number, name, erc20.MODULE_NAME);
 
-  if (_contract.block_number < block_number) {
-    update _contract ( .block_number = block_number );
+  if (_contract.unit < block_number) {
+    update _contract ( .unit = block_number );
   }
 
   create evm.processed_event(_contract, event_id);
@@ -55,11 +55,11 @@ operation destroy (
 ) {
   consensus.validate();
 
-  val _chain = evm.ensure_chain(chain);
-  val _contract = evm.ensure_contract(_chain, contract, block_number);
+  val _chain = require(assets.get_source(chain), "Unable to find chain: %s".format(chain));
+  val _contract = require(assets.get_asset(_chain, contract.to_hex()), "Unable to find contract: %s".format(contract.to_hex()));
 
   create evm.processed_event(_contract, event_id);
-  update _contract ( .block_number = block_number );
+  update _contract ( .unit = block_number );
 
   if (amount == 0) return;
 
@@ -86,14 +86,14 @@ operation transfer (
 ) {
   consensus.validate();
 
-  val _chain = evm.ensure_chain(chain);
-  val _contract = evm.ensure_contract(_chain, contract, block_number);
+  val _chain = require(assets.get_source(chain), "Unable to find chain: %s".format(chain));
+  val _contract = require(assets.get_asset(_chain, contract.to_hex()), "Unable to find contract: %s".format(contract.to_hex()));
 
-  val already_processed = evm.processed_event @? { .contract.id == contract, .event_id == event_id } != null;
+  val already_processed = evm.processed_event @? { .asset.id == assets.format_id(contract.to_hex()), .event_id == event_id } != null;
   if (already_processed) return;
 
   create evm.processed_event(_contract, event_id);
-  update _contract ( .block_number = block_number );
+  update _contract ( .unit = block_number );
 
   if (amount == 0) return;
 

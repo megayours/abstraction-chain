@@ -1,0 +1,3 @@
+@mount("assets") module;
+
+import modules.consensus;

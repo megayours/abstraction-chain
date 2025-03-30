@@ -1,0 +1,27 @@
+query get_collections(owner: text) {
+  return collection @* { .owner == format_account(owner) } ( .id, .name );
+}
+
+query get_items(collection: byte_array): list<item_dto> {
+  return (i: item, p: yours.imported_properties) @* {
+    i.collection.id == collection,
+    i.token == p.token
+  } ( item_dto(
+    collection = i.collection.id,
+    token_id = text.from_bytes(i.token.id.sub(collection.size())),
+    properties = yours.byte_array_to_properties(p.data)
+  ) );
+}
+
+query get_item(collection: byte_array, token_id: text) {
+  val expected_id = collection + token_id.to_bytes();
+  return (i: item, p: yours.imported_properties) @? {
+    i.collection.id == collection,
+    i.token == p.token,
+    i.token.id == expected_id
+  } ( item_dto(
+    collection = i.collection.id,
+    token_id = token_id,
+    properties = yours.byte_array_to_properties(p.data)
+  ) );
+}

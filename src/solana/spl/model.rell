@@ -1,5 +1,5 @@
 entity mint {
-  key id: text;
+  key asset: assets.asset;
   decimals: integer;
 }
 

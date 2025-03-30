@@ -48,7 +48,7 @@ function _handle_balance_update(sender: byte_array, msg: balance_update_message)
     balance.amount = msg.amount;
   }
 
-  balance_updated(msg.spl_id.mint, balance.account, balance.amount, spl_token.decimals);
+  balance_updated(msg.spl_id.mint, msg.account, balance.amount, spl_token.decimals);
 }
 
 function _serialize_token_id(account: text, mint: text): byte_array {

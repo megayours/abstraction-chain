@@ -1,3 +1,4 @@
 @mount("evm") module;
 
+import modules.assets;
 import modules.consensus;

@@ -2,6 +2,7 @@
 
 import ^^.evm;
 
+import modules.assets;
 import modules.extending_metadata;
 import modules.collection;
 import modules.consensus;

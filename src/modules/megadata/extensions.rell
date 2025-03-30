@@ -1,0 +1,14 @@
+@extend(yours.provide_properties)
+function(token: yours.token, modules: set<text>): map<text, map<text, gtv>> {
+  val module_properties = map<text, gtv>();
+  if (modules.contains(MODULE_NAME)) {
+    val collection = megadata @? { token } ( .collection_id );
+    if (collection != null) {
+      module_properties.put("collection", collection.to_gtv());
+      val token_id_without_collection = token.id.sub(collection.size());
+      module_properties.put("token_id", text.from_bytes(token_id_without_collection).to_gtv());
+    }
+  }
+
+  return yours.provide_module_properties(MODULE_NAME, module_properties);
+}

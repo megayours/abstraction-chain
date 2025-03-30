@@ -7,14 +7,14 @@ operation mint (
   to: byte_array, 
   metadata: json,
   token_uri: text,
-  collection_name: text?
+  collection_name: text
 ) {
   consensus.validate();
-  val _chain = evm.ensure_chain(chain);
-  val _contract = evm.ensure_contract(_chain, contract, block_number);
+  val _chain = assets.ensure_source(chain);
+  val _contract = assets.ensure_asset(_chain, contract.to_hex(), block_number, collection_name, erc721.MODULE_NAME);
 
-  if (_contract.block_number < block_number) {
-    update _contract ( .block_number = block_number );
+  if (_contract.unit < block_number) {
+    update _contract ( .unit = block_number );
   }
 
   create evm.processed_event(_contract, event_id);
@@ -40,9 +40,7 @@ operation mint (
 
   // Attach modules
   extending_metadata.attach(token, token_uri);
-  if (collection_name != null) {
-    collection.attach(token, collection_name);
-  }
+  collection.attach(token, collection_name);
 }
 
 operation transfer (
@@ -56,11 +54,11 @@ operation transfer (
 ) {
   consensus.validate();
 
-  val _chain = evm.ensure_chain(chain);
-  val _contract = evm.ensure_contract(_chain, contract, block_number);
+  val _chain = require(assets.get_source(chain), "Unable to find chain: %s".format(chain));
+  val _contract = require(assets.get_asset(_chain, contract.to_hex()), "Unable to find contract: %s".format(contract.to_hex()));
 
-  if (_contract.block_number < block_number) {
-    update _contract ( .block_number = block_number );
+  if (_contract.unit < block_number) {
+    update _contract ( .unit = block_number );
   }
 
   create evm.processed_event(_contract, event_id);

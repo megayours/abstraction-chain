@@ -1,18 +1,3 @@
-entity chain {
-  key name;
-}
-
-entity contract {
-  key chain, id: byte_array;
-  mutable block_number: integer;
-}
-
-entity contract_metadata {
-  key contract;
-  collection: name;
-  type: text;
-}
-
 entity processed_event {
-  key contract, event_id: text;
+  key assets.asset, event_id: text;
 }

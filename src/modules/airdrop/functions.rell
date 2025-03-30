@@ -1,0 +1,235 @@
+@extend(erc20.balance_updated)
+function erc20_balance_updated(
+  chain: name,
+  contract: byte_array,
+  account: byte_array,
+  amount: big_integer,
+  decimals: integer
+) {
+  val chain_formatted = chain.lower_case();
+  val asset_formatted = contract.to_hex().lower_case();
+
+  val airdrop_eligibility_balance = airdrop_eligibility_balance @? {
+    .source == chain_formatted,
+    .account == account.to_hex(),
+    .asset == asset_formatted
+  };
+
+  if (amount == 0) {
+    delete airdrop_eligibility_balance;
+    return;
+  }
+
+  if (airdrop_eligibility_balance == null) {
+    create airdrop_eligibility_balance (
+      source = chain_formatted,
+      asset = asset_formatted,
+      account = account.to_hex(),
+      amount = amount,
+      decimals = decimals,
+      created_at = op_context.last_block_time,
+      updated_at = op_context.last_block_time
+    );
+  } else {
+    update airdrop_eligibility_balance (
+      .amount = amount,
+      .updated_at = op_context.last_block_time
+    );
+  }
+}
+
+@extend(erc721.balance_updated)
+function erc721_balance_updated(
+  chain: name,
+  contract: byte_array,
+  token_id: big_integer,
+  account: byte_array,
+  amount: big_integer
+) {
+  val chain_formatted = chain.lower_case();
+  val asset_formatted = contract.to_hex().lower_case();
+
+  val airdrop_eligibility_balance = airdrop_eligibility_balance @? {
+    .source == chain_formatted,
+    .account == account.to_hex(),
+    .asset == asset_formatted
+  };
+
+  if (airdrop_eligibility_balance != null) {
+    if (amount == 0) {
+      val new_amount = airdrop_eligibility_balance.amount - amount;
+      if (new_amount > 0) {
+        update airdrop_eligibility_balance (
+          .amount = new_amount,
+          .updated_at = op_context.last_block_time
+        );
+      } else {
+        delete airdrop_eligibility_balance;
+      }
+    } else {
+      update airdrop_eligibility_balance (
+        .amount += amount,
+        .updated_at = op_context.last_block_time
+      );
+    }
+    return;
+  }
+
+  create airdrop_eligibility_balance (
+    source = chain_formatted,
+    asset = asset_formatted,
+    account = account.to_hex(),
+    amount = amount,
+    decimals = 0,
+    created_at = op_context.last_block_time,
+    updated_at = op_context.last_block_time
+  );
+}
+
+@extend(spl.balance_updated)
+function spl_balance_updated(
+  mint: text,
+  account: text,
+  amount: big_integer,
+  decimals: integer
+) {
+  val mint_formatted = mint.lower_case();
+  val airdrop_eligibility_balance = airdrop_eligibility_balance @? {
+    .source == "solana",
+    .account == account,
+    .asset == mint_formatted
+  };
+
+  if (amount == 0) {
+    delete airdrop_eligibility_balance;
+    return;
+  }
+
+  if (airdrop_eligibility_balance == null) {
+    create airdrop_eligibility_balance (
+      source = "solana",
+      asset = mint_formatted,
+      account = account,
+      amount = amount,
+      decimals = decimals,
+      created_at = op_context.last_block_time,
+      updated_at = op_context.last_block_time
+    );
+  } else {
+    update airdrop_eligibility_balance (
+      .amount = amount,
+      .updated_at = op_context.last_block_time
+    );
+  }
+}
+
+function _get_accounts_filtered_by_assets(
+  filters: list<asset_groups.asset_filter>,
+  from: timestamp?,
+  to: timestamp?
+): list<list<text>> {
+  // First get all qualifying accounts as before
+  val points_by_address = map<text, list<asset_groups.asset_filter>>();
+
+  for (filter in filters) {
+    val accounts = (b: airdrop_eligibility_balance) @* {
+      .source.lower_case() == filter.source.lower_case(),
+      .asset.lower_case() == filter.asset.lower_case(),
+      .amount >= filter.requires,
+      if (points_by_address.size() > 0) .account in points_by_address.keys() else true,
+      if (from != null) .created_at >= from else true,
+      if (to != null) .created_at <= to else true
+    } @* {} ( .account );
+
+    for (a in accounts) {
+      if (points_by_address.contains(a)) {
+        points_by_address[a].add(filter);
+      } else {
+        val new_filters = list<asset_groups.asset_filter>();
+        new_filters.add(filter);
+        points_by_address[a] = new_filters;
+      }
+    }
+  }
+
+  // Get all accounts that match at least one filter
+  val accounts_with_any_filter = set(points_by_address.keys());
+
+  // Create groups of linked accounts
+  val processed = set<text>();
+  val result = list<list<text>>();
+  
+  for (account in accounts_with_any_filter) {
+    if (account not in processed) {
+      // Get all linked accounts (both directions)
+      val linked_accounts = set<text>();
+      linked_accounts.add(account);
+      
+      // Get all directly linked accounts
+      val direct_links = account_links.account_link @* {
+        .account == account
+      };
+      
+      for (link in direct_links) {
+        val other_account = if (link.account == account) link.link else link.account;
+        linked_accounts.add(other_account);
+      }
+      
+      // Check if this group qualifies with full filter coverage
+      val group_filters = set<asset_groups.asset_filter>();
+      for (linked_account in linked_accounts) {
+        if (points_by_address.contains(linked_account)) {
+          group_filters.add_all(points_by_address[linked_account]);
+        }
+      }
+      
+      val group_qualifies = group_filters.size() == filters.size();
+      
+      if (group_qualifies) {
+        processed.add_all(linked_accounts);
+        result.add(list(linked_accounts));
+      }
+    }
+  }
+  
+  return result;
+}
+
+function _is_account_eligible_for_asset_group(account: text, filters: list<asset_groups.asset_filter>, from: timestamp?, to: timestamp?) {
+  // Get all linked accounts (both directions)
+  val linked_accounts = set<text>();
+  linked_accounts.add(account);
+  
+  // Get all directly linked accounts
+  val direct_links = account_links.account_link @* {
+    .account == account
+  };
+  
+  for (link in direct_links) {
+    val other_account = if (link.account == account) link.link else link.account;
+    linked_accounts.add(other_account);
+  }
+  
+  // Check if any of the linked accounts meet the requirements for each filter
+  val group_filters = set<asset_groups.asset_filter>();
+  
+  for (linked_account in linked_accounts) {
+    for (filter in filters) {
+      val matching_balances = airdrop_eligibility_balance @* {
+        .source.lower_case() == filter.source.lower_case(),
+        .asset.lower_case() == filter.asset.lower_case(),
+        .account == linked_account,
+        .amount >= filter.requires,
+        if (from != null) .created_at >= from else true,
+        if (to != null) .created_at <= to else true
+      };
+      
+      if (matching_balances.size() > 0) {
+        group_filters.add(filter);
+      }
+    }
+  }
+  
+  // Account is eligible if all filters are satisfied across the linked accounts
+  return group_filters.size() == filters.size();
+}
