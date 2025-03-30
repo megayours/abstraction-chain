@@ -25,7 +25,7 @@ function get_asset(source, id: text) {
   return asset @? { source, .id == _id };
 }
 
-function ensure_asset(source, id: text, unit: big_integer, name, type: name) {
+function ensure_asset(source, id: text, unit: integer, name, type: name) {
   val _id = format_id(id);
   val _type = format_type(type);
   return asset @? { source, .id == _id } ?: create asset(source, id = _id, unit, name, type = _type);
