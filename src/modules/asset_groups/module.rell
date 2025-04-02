@@ -2,3 +2,4 @@
 module;
 
 import modules.account_links;
+import modules.consensus;

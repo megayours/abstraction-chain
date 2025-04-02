@@ -1,6 +1,8 @@
 entity asset_group {
-  key id: text;
+  key id: byte_array;
+  name: text;
   created_at: timestamp;
+  mutable owner: text;
   mutable updated_at: timestamp;
 }
 

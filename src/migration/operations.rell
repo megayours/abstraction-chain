@@ -1,0 +1,3 @@
+operation import_asset(source: name, id: text, unit: integer, name: text, type: name) {
+  assets._register_asset(source, id, unit, name, type);
+}

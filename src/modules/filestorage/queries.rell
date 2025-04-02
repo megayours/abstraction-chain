@@ -1,0 +1,23 @@
+struct file_response {
+  data: gtv; 
+  content_type: gtv;
+}
+
+query get_file_hashes(owner: text) {
+  return file @* { .uploader == owner } ( .hash );
+}
+
+query get_file(hash: byte_array) {
+  val tx_data = require((f: file) @? { f.hash == hash } ( .transaction.tx_data ), "File not found: %s".format(hash));
+  
+  val tx = gtx_transaction.from_bytes(tx_data);
+  val op = tx.body.operations[0];
+  val args = op.args;
+  val data = args[0];
+  val content_type = args[1];
+
+  return file_response(
+    data = data,
+    content_type = content_type
+  );
+}

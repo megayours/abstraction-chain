@@ -1,7 +1,9 @@
-query get_asset_groups() {
-  return asset_group @* { } ( .id );
+query get_asset_groups(owner: text?) {
+  return asset_group @* {
+    if (owner != null) .owner.lower_case() == owner.lower_case() else true
+  } ( .id, .name, .owner );
 }
 
-query get_asset_group_filters(asset_group_id: text) {
+query get_asset_group_filters(asset_group_id: byte_array) {
   return asset_group_filter @* { .asset_group.id == asset_group_id } ( asset_filter ( .source, .asset, .requires ) );
 }

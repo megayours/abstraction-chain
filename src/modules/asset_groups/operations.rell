@@ -1,12 +1,16 @@
-operation create_asset_group(id: text) {
+operation create_asset_group(id: byte_array, name: text, owner: text) {
+  consensus.validate();
   create asset_group (
     id = id,
+    name = name,
     created_at = op_context.last_block_time,
-    updated_at = op_context.last_block_time
+    updated_at = op_context.last_block_time,
+    owner = owner
   );
 }
 
-operation add_asset_group_filter(asset_group_id: text, source: name, asset: text, requires: integer) {
+operation add_asset_group_filter(asset_group_id: byte_array, source: name, asset: text, requires: integer) {
+  consensus.validate();
   create asset_group_filter (
     asset_group = require(
       asset_group @? { .id == asset_group_id },
@@ -18,7 +22,8 @@ operation add_asset_group_filter(asset_group_id: text, source: name, asset: text
   );
 }
 
-operation remove_asset_group_filter(asset_group_id: text, source: name, asset: text) {
+operation remove_asset_group_filter(asset_group_id: byte_array, source: name, asset: text) {
+  consensus.validate();
   delete asset_group_filter @? {
     .asset_group == require(
       asset_group @? { .id == asset_group_id },

@@ -1,0 +1,5 @@
+entity file {
+  key hash: byte_array;
+  transaction;
+  uploader: text;
+}

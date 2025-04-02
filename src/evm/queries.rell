@@ -1,7 +1,7 @@
 query get_processed_events(contract: byte_array) {
-  return (e: processed_event) @* { .asset.id == assets.format_id(contract.to_hex()) } ( .event_id );
+  return (e: processed_event) @* { .asset.id.lower_case() == contract.to_hex().lower_case() } ( .event_id );
 }
 
 query is_event_processed(contract: byte_array, event_id: text) {
-  return (e: processed_event) @? { .asset.id == assets.format_id(contract.to_hex()), .event_id == event_id } != null;
+  return (e: processed_event) @? { .asset.id.lower_case() == contract.to_hex().lower_case(), .event_id == event_id } != null;
 }

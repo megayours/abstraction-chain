@@ -89,7 +89,7 @@ operation transfer (
   val _chain = require(assets.get_source(chain), "Unable to find chain: %s".format(chain));
   val _contract = require(assets.get_asset(_chain, contract.to_hex()), "Unable to find contract: %s".format(contract.to_hex()));
 
-  val already_processed = evm.processed_event @? { .asset.id == assets.format_id(contract.to_hex()), .event_id == event_id } != null;
+  val already_processed = evm.processed_event @? { .asset.id.lower_case() == contract.to_hex().lower_case(), .event_id == event_id } != null;
   if (already_processed) return;
 
   create evm.processed_event(_contract, event_id);

@@ -6,6 +6,7 @@ import modules.airdrop;
 import modules.account_links;
 import modules.asset_groups;
 import modules.megadata;
+import modules.filestorage;
 
 import evm;
 import evm.erc721;

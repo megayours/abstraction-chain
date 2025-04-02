@@ -1,14 +1,15 @@
 struct asset_info {
   source: name;
   id: text;
-  unit: big_integer;
+  unit: integer;
   name: text;
   type: name;
 }
 
-query get_assets_info(type: name?): list<asset_info> {
+query get_assets_info(source: name?, type: name?): list<asset_info> {
   return (a: asset) @* {
-    if (type == null) true else .type == type
+    if (source != null) .source.name == source.lower_case() else true,
+    if (type != null) .type == type.lower_case() else true
   } (
     asset_info (
       source = a.source.name,
@@ -20,6 +21,16 @@ query get_assets_info(type: name?): list<asset_info> {
   );
 }
 
+query get_sources(): list<name> {
+  return source @* {} ( .name );
+}
+
+query get_types(source: name?): set<name> {
+  return set(asset @* {
+    if (source != null) .source.name == source.lower_case() else true
+  } ( .type ));
+}
+
 query get_unit(source: name, id: text) {
-  return asset @? { .source.name == source.lower_case(), .id == id.lower_case() } ( .unit );
+  return asset @? { .source.name == source.lower_case(), .id.lower_case() == id.lower_case() } ( .unit );
 }

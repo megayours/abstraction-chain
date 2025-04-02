@@ -6,7 +6,5 @@ operation register(
   type: text
 ) {
   consensus.validate();
-  
-  val _source = ensure_source(source);
-  ensure_asset(_source, id, start_unit, name, type);
+  _register_asset(source, id, start_unit, name, type);
 }

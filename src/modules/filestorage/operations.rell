@@ -1,0 +1,6 @@
+operation store_file(data: byte_array, content_type: text, uploader: text) {
+  consensus.validate();
+
+  val hash = sha256(data);
+  create file(hash, op_context.transaction, uploader);
+}
